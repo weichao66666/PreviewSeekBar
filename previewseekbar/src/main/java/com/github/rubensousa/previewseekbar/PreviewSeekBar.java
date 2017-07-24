@@ -13,12 +13,8 @@ import android.widget.SeekBar;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * A SeekBar that should be used inside PreviewSeekBarLayout
- */
 public class PreviewSeekBar extends AppCompatSeekBar implements SeekBar.OnSeekBarChangeListener {
-
-    private List<OnSeekBarChangeListener> listeners;
+    private List<OnSeekBarChangeListener> mListenerList;
 
     public PreviewSeekBar(Context context) {
         super(context);
@@ -36,56 +32,70 @@ public class PreviewSeekBar extends AppCompatSeekBar implements SeekBar.OnSeekBa
     }
 
     private void init() {
-        listeners = new ArrayList<>();
+        mListenerList = new ArrayList<>();
         super.setOnSeekBarChangeListener(this);
-    }
-
-    @Override
-    public void setOnSeekBarChangeListener(OnSeekBarChangeListener l) {
-        addOnSeekBarChangeListener(l);
     }
 
     public void setTintColorResource(@ColorRes int colorResource) {
         setTintColor(ContextCompat.getColor(getContext(), colorResource));
     }
 
+    /**
+     * 设置滑动块和进度条的颜色
+     *
+     * @param color
+     */
     public void setTintColor(@ColorInt int color) {
+        // 设置滑动块的颜色
         Drawable drawable = DrawableCompat.wrap(getThumb());
         DrawableCompat.setTint(drawable, color);
         setThumb(drawable);
-
+        // 设置进度条的颜色
         drawable = DrawableCompat.wrap(getProgressDrawable());
         DrawableCompat.setTint(drawable, color);
         setProgressDrawable(drawable);
     }
 
+    @Override
+    public void setOnSeekBarChangeListener(OnSeekBarChangeListener listener) {
+        addOnSeekBarChangeListener(listener);
+    }
+
     public void addOnSeekBarChangeListener(OnSeekBarChangeListener listener) {
-        if (!listeners.contains(listener)) {
-            listeners.add(listener);
+        if (!mListenerList.contains(listener)) {
+            mListenerList.add(listener);
         }
     }
 
     public void removeOnSeekBarChangeListener(OnSeekBarChangeListener listener) {
-        listeners.remove(listener);
+        mListenerList.remove(listener);
     }
+
+    public void removeAllOnSeekBarChangeListener() {
+        for (OnSeekBarChangeListener listener : mListenerList) {
+            mListenerList.remove(listener);
+        }
+    }
+
+    /*SeekBar.OnSeekBarChangeListener*/
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        for (OnSeekBarChangeListener listener : listeners) {
+        for (OnSeekBarChangeListener listener : mListenerList) {
             listener.onProgressChanged(seekBar, progress, fromUser);
         }
     }
 
     @Override
     public void onStartTrackingTouch(SeekBar seekBar) {
-        for (OnSeekBarChangeListener listener : listeners) {
+        for (OnSeekBarChangeListener listener : mListenerList) {
             listener.onStartTrackingTouch(seekBar);
         }
     }
 
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
-        for (OnSeekBarChangeListener listener : listeners) {
+        for (OnSeekBarChangeListener listener : mListenerList) {
             listener.onStopTrackingTouch(seekBar);
         }
     }

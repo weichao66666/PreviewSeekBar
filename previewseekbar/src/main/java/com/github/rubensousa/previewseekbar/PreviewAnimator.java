@@ -1,58 +1,53 @@
 package com.github.rubensousa.previewseekbar;
 
-
 import android.view.View;
 
 abstract class PreviewAnimator {
-
     static final int MORPH_REVEAL_DURATION = 250;
     static final int MORPH_MOVE_DURATION = 200;
     static final int UNMORPH_MOVE_DURATION = 200;
     static final int UNMORPH_UNREVEAL_DURATION = 250;
 
-    PreviewSeekBar previewSeekBar;
-    PreviewSeekBarLayout previewSeekBarLayout;
-    View previewView;
-    View frameView;
-    View morphView;
+    PreviewSeekBarLayout mSeekBarLayout;
+    PreviewSeekBar mSeekBar;
+    View mPreviewViewContainer;
+    View mPreviewView;
+    View mMorphView;
 
     public PreviewAnimator(PreviewSeekBarLayout previewSeekBarLayout) {
-        this.previewSeekBarLayout = previewSeekBarLayout;
-        this.previewSeekBar = previewSeekBarLayout.getSeekBar();
-        this.previewView = previewSeekBarLayout.getPreviewFrameLayout();
-        this.morphView = previewSeekBarLayout.getMorphView();
-        this.frameView = previewSeekBarLayout.getFrameView();
+        mSeekBarLayout = previewSeekBarLayout;
+        mSeekBar = previewSeekBarLayout.getSeekBar();
+        mPreviewViewContainer = previewSeekBarLayout.getPreviewViewContainer();
+        mPreviewView = previewSeekBarLayout.getPreviewView();
+        mMorphView = previewSeekBarLayout.getMorphView();
     }
 
     public void move() {
-        previewView.setX(getPreviewX());
-        morphView.setX(getPreviewCenterX(morphView.getWidth()));
+        mMorphView.setX(getPreviewCenterX(mMorphView.getWidth()));
+        mPreviewViewContainer.setX(getPreviewX());
+    }
+
+    float getPreviewCenterX(int width) {
+        return getPreviewX() + (mPreviewViewContainer.getWidth() - width) / 2f;
+    }
+
+    float getPreviewX() {
+        return (mSeekBarLayout.getWidth() - mPreviewViewContainer.getWidth()) * getWidthOffset(mSeekBar.getProgress());
+    }
+
+    float getWidthOffset(int progress) {
+        return (float) progress / mSeekBar.getMax();
+    }
+
+    float getHideY() {
+        return mSeekBar.getY() + mSeekBar.getThumbOffset();
+    }
+
+    float getShowY() {
+        return (int) (mPreviewViewContainer.getY() + mPreviewViewContainer.getHeight() / 2f);
     }
 
     public abstract void show();
 
     public abstract void hide();
-
-    float getWidthOffset(int progress) {
-        return (float) progress / previewSeekBar.getMax();
-    }
-
-    float getPreviewCenterX(int width) {
-        return (previewSeekBarLayout.getWidth() - previewView.getWidth())
-                * getWidthOffset(previewSeekBar.getProgress()) + previewView.getWidth() / 2f
-                - width / 2f;
-    }
-
-    float getPreviewX() {
-        return ((float) (previewSeekBarLayout.getWidth() - previewView.getWidth()))
-                * getWidthOffset(previewSeekBar.getProgress());
-    }
-
-    float getHideY() {
-        return previewSeekBar.getY() + previewSeekBar.getThumbOffset();
-    }
-
-    float getShowY(){
-       return (int) (previewView.getY() + previewView.getHeight() / 2f);
-    }
 }

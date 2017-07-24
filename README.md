@@ -1,3 +1,8 @@
+# 介绍
+
+基于 ExoPlayer，有 seekbar 预览，预览出现、消失有非常不错的动画。
+本质是两个 player，一个用于播放，一个用于预览。
+
 # PreviewSeekBar
 
 A SeekBar suited for showing a preview of something. As seen in Google Play Movies.

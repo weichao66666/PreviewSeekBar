@@ -1,77 +1,82 @@
 package com.github.rubensousa.previewseekbar;
 
-
 import android.os.Build;
 import android.view.View;
 import android.widget.SeekBar;
 
 class PreviewDelegate implements SeekBar.OnSeekBarChangeListener {
+    private PreviewSeekBarLayout mSeekBarLayout;
+    private PreviewAnimator mAnimator;          // 小球弹出、收回动画
+    private boolean mShowFlag;
+    private boolean mStartTouchFlag;
 
-    private PreviewSeekBarLayout previewSeekBarLayout;
-    private PreviewAnimator animator;
-    private boolean showing;
-    private boolean startTouch;
-    private boolean setup;
-
-    public PreviewDelegate(PreviewSeekBarLayout previewSeekBarLayout) {
-        this.previewSeekBarLayout = previewSeekBarLayout;
+    public PreviewDelegate(PreviewSeekBarLayout seekBarLayout) {
+        mSeekBarLayout = seekBarLayout;
     }
 
     public void setup() {
-        previewSeekBarLayout.getPreviewFrameLayout().setVisibility(View.INVISIBLE);
-        previewSeekBarLayout.getMorphView().setVisibility(View.INVISIBLE);
-        previewSeekBarLayout.getFrameView().setVisibility(View.INVISIBLE);
-        previewSeekBarLayout.getSeekBar().addOnSeekBarChangeListener(this);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            this.animator = new PreviewAnimatorLollipopImpl(previewSeekBarLayout);
-        } else {
-            this.animator = new PreviewAnimatorImpl(previewSeekBarLayout);
+        if (mSeekBarLayout != null) {
+            mSeekBarLayout.getPreviewViewContainer().setVisibility(View.INVISIBLE);
+            mSeekBarLayout.getMorphView().setVisibility(View.INVISIBLE);
+            mSeekBarLayout.getPreviewView().setVisibility(View.INVISIBLE);
+            mSeekBarLayout.getSeekBar().addOnSeekBarChangeListener(this);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                mAnimator = new PreviewAnimatorLollipopImpl(mSeekBarLayout);
+            } else {
+                mAnimator = new PreviewAnimatorImpl(mSeekBarLayout);
+            }
         }
-        setup = true;
     }
 
-    public boolean isShowing() {
-        return showing;
+    public boolean isShown() {
+        return mShowFlag;
     }
 
     public void show() {
-        if (!showing && setup) {
-            animator.show();
-            showing = true;
+        if (mAnimator != null) {
+            if (!mShowFlag) {
+                mAnimator.show();
+                mShowFlag = true;
+            }
         }
     }
 
     public void hide() {
-        if (showing) {
-            animator.hide();
-            showing = false;
+        if (mAnimator != null) {
+            if (mShowFlag) {
+                mAnimator.hide();
+                mShowFlag = false;
+            }
         }
     }
 
+    /*SeekBar.OnSeekBarChangeListener*/
+
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        if (setup) {
-            animator.move();
-            if (!showing && !startTouch && fromUser) {
-                animator.show();
-                showing = true;
+        if (mAnimator != null) {
+            mAnimator.move();
+            if (!mShowFlag && !mStartTouchFlag && fromUser) {
+                mAnimator.show();
+                mShowFlag = true;
             }
+            mStartTouchFlag = false;
         }
-        startTouch = false;
     }
 
     @Override
     public void onStartTrackingTouch(SeekBar seekBar) {
-        startTouch = true;
+        mStartTouchFlag = true;
     }
 
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
-        if (showing) {
-            animator.hide();
+        if (mAnimator != null) {
+            if (mShowFlag) {
+                mAnimator.hide();
+            }
+            mShowFlag = false;
+            mStartTouchFlag = false;
         }
-        showing = false;
-        startTouch = false;
     }
-
 }

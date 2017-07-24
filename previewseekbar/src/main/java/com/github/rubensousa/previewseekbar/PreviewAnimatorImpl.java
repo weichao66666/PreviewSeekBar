@@ -3,13 +3,9 @@ package com.github.rubensousa.previewseekbar;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.annotation.TargetApi;
-import android.os.Build;
 import android.view.View;
-import android.view.ViewAnimationUtils;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
-import android.view.animation.DecelerateInterpolator;
 
 class PreviewAnimatorImpl extends PreviewAnimator {
 
@@ -17,7 +13,7 @@ class PreviewAnimatorImpl extends PreviewAnimator {
         @Override
         public void onAnimationEnd(Animator animation) {
             super.onAnimationEnd(animation);
-            morphView.animate().setListener(null);
+            mMorphView.animate().setListener(null);
             startReveal();
         }
     };
@@ -26,8 +22,8 @@ class PreviewAnimatorImpl extends PreviewAnimator {
         @Override
         public void onAnimationEnd(Animator animation) {
             super.onAnimationEnd(animation);
-            morphView.setVisibility(View.INVISIBLE);
-            morphView.animate().setListener(null);
+            mMorphView.setVisibility(View.INVISIBLE);
+            mMorphView.animate().setListener(null);
         }
     };
 
@@ -37,12 +33,12 @@ class PreviewAnimatorImpl extends PreviewAnimator {
 
     @Override
     public void show() {
-        previewView.setScaleX(getScaleXStart());
-        previewView.setScaleY(getScaleYStart());
-        morphView.setX(getPreviewCenterX(morphView.getWidth()));
-        morphView.setY(previewSeekBar.getY());
-        morphView.setVisibility(View.VISIBLE);
-        morphView.animate()
+        mPreviewViewContainer.setScaleX(getScaleXStart());
+        mPreviewViewContainer.setScaleY(getScaleYStart());
+        mMorphView.setX(getPreviewCenterX(mMorphView.getWidth()));
+        mMorphView.setY(mSeekBar.getY());
+        mMorphView.setVisibility(View.VISIBLE);
+        mMorphView.animate()
                 .y(getShowY())
                 .scaleY(4.0f)
                 .scaleX(4.0f)
@@ -53,17 +49,17 @@ class PreviewAnimatorImpl extends PreviewAnimator {
 
     @Override
     public void hide() {
-        frameView.setVisibility(View.VISIBLE);
-        previewView.setVisibility(View.VISIBLE);
-        morphView.setY(getShowY());
-        morphView.setScaleX(4.0f);
-        morphView.setScaleY(4.0f);
-        morphView.setVisibility(View.INVISIBLE);
+        mPreviewView.setVisibility(View.VISIBLE);
+        mPreviewViewContainer.setVisibility(View.VISIBLE);
+        mMorphView.setY(getShowY());
+        mMorphView.setScaleX(4.0f);
+        mMorphView.setScaleY(4.0f);
+        mMorphView.setVisibility(View.INVISIBLE);
         startUnreveal();
     }
 
     private void startReveal() {
-        previewView.animate()
+        mPreviewViewContainer.animate()
                 .setInterpolator(new AccelerateInterpolator())
                 .setDuration(MORPH_REVEAL_DURATION)
                 .scaleX(1)
@@ -72,28 +68,28 @@ class PreviewAnimatorImpl extends PreviewAnimator {
                     @Override
                     public void onAnimationStart(Animator animation) {
                         super.onAnimationStart(animation);
-                        frameView.setAlpha(1f);
-                        previewView.setVisibility(View.VISIBLE);
-                        frameView.setVisibility(View.VISIBLE);
-                        morphView.setVisibility(View.INVISIBLE);
-                        frameView.animate().alpha(0f).setDuration(MORPH_REVEAL_DURATION);
+                        mPreviewView.setAlpha(1f);
+                        mPreviewViewContainer.setVisibility(View.VISIBLE);
+                        mPreviewView.setVisibility(View.VISIBLE);
+                        mMorphView.setVisibility(View.INVISIBLE);
+                        mPreviewView.animate().alpha(0f).setDuration(MORPH_REVEAL_DURATION);
                     }
 
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         super.onAnimationEnd(animation);
-                        previewView.animate().setListener(null);
-                        previewView.animate().setListener(null);
-                        frameView.setVisibility(View.INVISIBLE);
+                        mPreviewViewContainer.animate().setListener(null);
+                        mPreviewViewContainer.animate().setListener(null);
+                        mPreviewView.setVisibility(View.INVISIBLE);
                     }
                 });
     }
 
     private void startUnreveal() {
-        frameView.animate().alpha(1f).setDuration(UNMORPH_UNREVEAL_DURATION)
+        mPreviewView.animate().alpha(1f).setDuration(UNMORPH_UNREVEAL_DURATION)
                 .setInterpolator(new AccelerateInterpolator());
 
-        previewView.animate()
+        mPreviewViewContainer.animate()
                 .setDuration(UNMORPH_UNREVEAL_DURATION)
                 .setInterpolator(new AccelerateInterpolator())
                 .scaleX(getScaleXStart())
@@ -102,11 +98,11 @@ class PreviewAnimatorImpl extends PreviewAnimator {
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         super.onAnimationEnd(animation);
-                        previewView.animate().setListener(null);
-                        frameView.setVisibility(View.INVISIBLE);
-                        previewView.setVisibility(View.INVISIBLE);
-                        morphView.setVisibility(View.VISIBLE);
-                        morphView.animate()
+                        mPreviewViewContainer.animate().setListener(null);
+                        mPreviewView.setVisibility(View.INVISIBLE);
+                        mPreviewViewContainer.setVisibility(View.INVISIBLE);
+                        mMorphView.setVisibility(View.VISIBLE);
+                        mMorphView.animate()
                                 .y(getHideY())
                                 .scaleY(0.5f)
                                 .scaleX(0.5f)
@@ -118,11 +114,11 @@ class PreviewAnimatorImpl extends PreviewAnimator {
     }
 
     private float getScaleXStart() {
-        return morphView.getWidth() / previewView.getWidth();
+        return mMorphView.getWidth() / mPreviewViewContainer.getWidth();
     }
 
     private float getScaleYStart() {
-        return (morphView.getWidth() * 2) / previewView.getWidth();
+        return (mMorphView.getWidth() * 2) / mPreviewViewContainer.getWidth();
     }
 
 }

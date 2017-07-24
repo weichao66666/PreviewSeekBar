@@ -1,22 +1,4 @@
-/*
- * Copyright 2016 The Android Open Source Project
- * Copyright 2017 Rúben Sousa
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.github.rubensousa.previewseekbar.sample.exoplayer;
-
 
 import android.content.Context;
 import android.net.Uri;
@@ -38,54 +20,51 @@ import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
 
 public class ExoPlayerMediaSourceBuilder {
-
-    private DefaultBandwidthMeter bandwidthMeter;
-    private Context context;
-    private Uri uri;
-    private int streamType;
-    private Handler mainHandler = new Handler();
+    private DefaultBandwidthMeter mBandwidthMeter;
+    private Context mContext;
+    private Uri mUri;
+    private int mStreamType;
+    private Handler mHandler = new Handler();
 
     public ExoPlayerMediaSourceBuilder(Context context) {
-        this.context = context;
-        this.bandwidthMeter = new DefaultBandwidthMeter();
+        mContext = context;
+        mBandwidthMeter = new DefaultBandwidthMeter();
     }
 
     public void setUri(Uri uri) {
-        this.uri = uri;
-        this.streamType = Util.inferContentType(uri.getLastPathSegment());
+        mUri = uri;
+        mStreamType = Util.inferContentType(uri.getLastPathSegment());
     }
 
     public MediaSource getMediaSource(boolean preview) {
-        switch (streamType) {
+        switch (mStreamType) {
             case C.TYPE_SS:
-                return new SsMediaSource(uri, new DefaultDataSourceFactory(context, null,
-                        getHttpDataSourceFactory(preview)),
+                return new SsMediaSource(mUri,
+                        new DefaultDataSourceFactory(mContext, null, getHttpDataSourceFactory(preview)),
                         new DefaultSsChunkSource.Factory(getDataSourceFactory(preview)),
-                        mainHandler, null);
+                        mHandler,
+                        null);
             case C.TYPE_DASH:
-                return new DashMediaSource(uri,
-                        new DefaultDataSourceFactory(context, null,
-                                getHttpDataSourceFactory(preview)),
+                return new DashMediaSource(mUri,
+                        new DefaultDataSourceFactory(mContext, null, getHttpDataSourceFactory(preview)),
                         new DefaultDashChunkSource.Factory(getDataSourceFactory(preview)),
-                        mainHandler, null);
+                        mHandler,
+                        null);
             case C.TYPE_HLS:
-                return new HlsMediaSource(uri, getDataSourceFactory(preview), mainHandler, null);
+                return new HlsMediaSource(mUri, getDataSourceFactory(preview), mHandler, null);
             case C.TYPE_OTHER:
-                return new ExtractorMediaSource(uri, getDataSourceFactory(preview),
-                        new DefaultExtractorsFactory(), mainHandler, null);
+                return new ExtractorMediaSource(mUri, getDataSourceFactory(preview), new DefaultExtractorsFactory(), mHandler, null);
             default: {
-                throw new IllegalStateException("Unsupported type: " + streamType);
+                throw new IllegalStateException("Unsupported type: " + mStreamType);
             }
         }
     }
 
     private DataSource.Factory getDataSourceFactory(boolean preview) {
-        return new DefaultDataSourceFactory(context, preview ? null : bandwidthMeter,
-                getHttpDataSourceFactory(preview));
+        return new DefaultDataSourceFactory(mContext, preview ? null : mBandwidthMeter, getHttpDataSourceFactory(preview));
     }
 
     private DataSource.Factory getHttpDataSourceFactory(boolean preview) {
-        return new DefaultHttpDataSourceFactory(Util.getUserAgent(context,
-                "ExoPlayerDemo"), preview ? null : bandwidthMeter);
+        return new DefaultHttpDataSourceFactory(Util.getUserAgent(mContext, "ExoPlayerDemo"), preview ? null : mBandwidthMeter);
     }
 }

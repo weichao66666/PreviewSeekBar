@@ -18,44 +18,43 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 
 public class PreviewSeekBarLayout extends RelativeLayout implements SeekBar.OnSeekBarChangeListener {
+    private View mMorphView;                // 小球
+    private View mPreviewView;              // 预览窗
+    private PreviewSeekBar mSeekBar;
+    private FrameLayout mPreviewViewContainer;
+    private PreviewDelegate mDelegate;
+    private PreviewLoader mLoader;
 
-    private PreviewDelegate delegate;
-    private PreviewSeekBar seekBar;
-    private FrameLayout previewFrameLayout;
-    private View morphView;
-    private View frameView;
-    private boolean firstLayout = true;
-    private int tintColor;
-    private PreviewLoader loader;
+    private int mTintColor;
+
+    private boolean mLayoutFlag = false;
 
     public PreviewSeekBarLayout(Context context) {
         super(context);
-        init(context, null);
+        init(context);
     }
 
     public PreviewSeekBarLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init(context, attrs);
+        init(context);
     }
 
     public PreviewSeekBarLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init(context, attrs);
+        init(context);
     }
 
-    private void init(Context context, AttributeSet attrs) {
+    private void init(Context context) {
         TypedValue outValue = new TypedValue();
-
         getContext().getTheme().resolveAttribute(R.attr.colorAccent, outValue, true);
-        tintColor = ContextCompat.getColor(context, outValue.resourceId);
+        mTintColor = ContextCompat.getColor(context, outValue.resourceId);
 
-        // Create morph view
-        morphView = new View(getContext());
-        morphView.setBackgroundResource(R.drawable.previewseekbar_morph);
+        mMorphView = new View(getContext());
+        mMorphView.setBackgroundResource(R.drawable.previewseekbar_morph);
 
-        // Create frame view for the circular reveal
-        frameView = new View(getContext());
-        delegate = new PreviewDelegate(this);
+        mPreviewView = new View(getContext());
+
+        mDelegate = new PreviewDelegate(this);
     }
 
     @Override
@@ -63,138 +62,56 @@ public class PreviewSeekBarLayout extends RelativeLayout implements SeekBar.OnSe
         super.onLayout(changed, left, top, right, bottom);
         if (getWidth() == 0 || getHeight() == 0) {
             return;
-        } else if (firstLayout) {
-
-            // Check if we have the proper views
+        } else if (!mLayoutFlag) {
             if (!checkChilds()) {
-                throw new IllegalStateException("You need to add a PreviewSeekBar" +
-                        "and a FrameLayout as direct childs");
+                throw new IllegalStateException("You need to add a PreviewSeekBar and a FrameLayout as direct childs");
             }
 
-            // Set proper seek bar margins
-            setupSeekbarMargins();
+            setSeekbarMargins();
 
-            // Setup colors for the morph view and frame view
-            setupColors();
+            setColors();
 
-            delegate.setup();
+            mDelegate.setup();
 
-            if (loader != null) {
-                setup(loader);
+            if (mLoader != null) {
+                setup(mLoader);
             }
 
-            // Setup morph view
             ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(0, 0);
-            layoutParams.width = getResources()
-                    .getDimensionPixelSize(R.dimen.previewseekbar_indicator_width);
+            layoutParams.width = getResources().getDimensionPixelSize(R.dimen.previewseekbar_indicator_width);
             layoutParams.height = layoutParams.width;
-            addView(morphView, layoutParams);
+            addView(mMorphView, layoutParams);
 
-            // Add frame view to the preview layout
-            FrameLayout.LayoutParams frameLayoutParams
-                    = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT);
+            FrameLayout.LayoutParams frameLayoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
             frameLayoutParams.gravity = Gravity.CENTER;
-            previewFrameLayout.addView(frameView, frameLayoutParams);
-            firstLayout = false;
+            mPreviewViewContainer.addView(mPreviewView, frameLayoutParams);
+
+            mLayoutFlag = true;
         }
-    }
-
-    public void setup(PreviewLoader loader) {
-        this.loader = loader;
-        if (this.loader != null && seekBar != null) {
-            seekBar.addOnSeekBarChangeListener(this);
-        }
-    }
-
-    public boolean isShowingPreview() {
-        return delegate.isShowing();
-    }
-
-    public void showPreview() {
-        delegate.show();
-    }
-
-    public void hidePreview() {
-        delegate.hide();
-    }
-
-    public FrameLayout getPreviewFrameLayout() {
-        return previewFrameLayout;
-    }
-
-    public PreviewSeekBar getSeekBar() {
-        return seekBar;
-    }
-
-    View getFrameView() {
-        return frameView;
-    }
-
-    View getMorphView() {
-        return morphView;
-    }
-
-    public void setTintColor(@ColorInt int color) {
-        tintColor = color;
-        Drawable drawable = DrawableCompat.wrap(morphView.getBackground());
-        DrawableCompat.setTint(drawable, color);
-        morphView.setBackground(drawable);
-        frameView.setBackgroundColor(color);
-    }
-
-    public void setTintColorResource(@ColorRes int color) {
-        setTintColor(ContextCompat.getColor(getContext(), color));
-    }
-
-    private void setupColors() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            ColorStateList list = seekBar.getThumbTintList();
-            if (list != null) {
-                tintColor = list.getDefaultColor();
-            }
-        }
-        setTintColor(tintColor);
     }
 
     /**
-     * Align seekbar thumb with the frame layout center
+     * 检查子 View 是否包含 PreviewSeekBar 和 FrameLayout
+     *
+     * @return
      */
-    private void setupSeekbarMargins() {
-        LayoutParams layoutParams = (LayoutParams) seekBar.getLayoutParams();
-
-        layoutParams.rightMargin = (int) (previewFrameLayout.getWidth() / 2
-                - seekBar.getThumb().getIntrinsicWidth() * 0.9f);
-        layoutParams.leftMargin = layoutParams.rightMargin;
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            layoutParams.setMarginEnd(layoutParams.leftMargin);
-            layoutParams.setMarginStart(layoutParams.leftMargin);
-        }
-
-        seekBar.setLayoutParams(layoutParams);
-        requestLayout();
-        invalidate();
-    }
-
     private boolean checkChilds() {
-        int childs = getChildCount();
+        int childCount = getChildCount();
 
-        if (childs < 2) {
+        if (childCount < 2) {
             return false;
         }
 
         boolean hasSeekbar = false;
         boolean hasFrameLayout = false;
-
-        for (int i = 0; i < getChildCount(); i++) {
+        for (int i = 0; i < childCount; i++) {
             View child = getChildAt(i);
 
             if (child instanceof PreviewSeekBar) {
+                mSeekBar = (PreviewSeekBar) child;
                 hasSeekbar = true;
-                seekBar = (PreviewSeekBar) child;
             } else if (child instanceof FrameLayout) {
-                previewFrameLayout = (FrameLayout) child;
+                mPreviewViewContainer = (FrameLayout) child;
                 hasFrameLayout = true;
             }
 
@@ -203,14 +120,89 @@ public class PreviewSeekBarLayout extends RelativeLayout implements SeekBar.OnSe
             }
         }
 
-        return hasSeekbar && hasFrameLayout;
+        return false;
     }
+
+    /**
+     * 改变 seekbar 位置（左、右均留出预览窗一般的宽度）
+     */
+    private void setSeekbarMargins() {
+        LayoutParams layoutParams = (LayoutParams) mSeekBar.getLayoutParams();
+        layoutParams.rightMargin = (int) (mPreviewViewContainer.getWidth() / 2 - mSeekBar.getThumb().getIntrinsicWidth() * 0.9f);
+        layoutParams.leftMargin = layoutParams.rightMargin;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            layoutParams.setMarginEnd(layoutParams.leftMargin);
+            layoutParams.setMarginStart(layoutParams.leftMargin);
+        }
+        mSeekBar.setLayoutParams(layoutParams);
+        requestLayout();
+        invalidate();
+    }
+
+    public void setup(PreviewLoader loader) {
+        mLoader = loader;
+        if (mLoader != null && mSeekBar != null) {
+            mSeekBar.addOnSeekBarChangeListener(this);
+        }
+    }
+
+    private void setColors() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            ColorStateList list = mSeekBar.getThumbTintList();
+            if (list != null) {
+                mTintColor = list.getDefaultColor();
+            }
+        }
+        setTintColor(mTintColor);
+    }
+
+    public void setTintColorResource(@ColorRes int color) {
+        setTintColor(ContextCompat.getColor(getContext(), color));
+    }
+
+    public void setTintColor(@ColorInt int color) {
+        mTintColor = color;
+        Drawable drawable = DrawableCompat.wrap(mMorphView.getBackground());
+        DrawableCompat.setTint(drawable, color);
+        mMorphView.setBackground(drawable);
+        mPreviewView.setBackgroundColor(color);
+    }
+
+    public boolean isShownPreview() {
+        return mDelegate.isShown();
+    }
+
+    public void showPreview() {
+        mDelegate.show();
+    }
+
+    public void hidePreview() {
+        mDelegate.hide();
+    }
+
+    public FrameLayout getPreviewViewContainer() {
+        return mPreviewViewContainer;
+    }
+
+    public PreviewSeekBar getSeekBar() {
+        return mSeekBar;
+    }
+
+    View getPreviewView() {
+        return mPreviewView;
+    }
+
+    View getMorphView() {
+        return mMorphView;
+    }
+
+    /*SeekBar.OnSeekBarChangeListener*/
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
         if (fromUser) {
-            if (loader != null) {
-                loader.loadPreview(progress, seekBar.getMax());
+            if (mLoader != null) {
+                mLoader.loadPreview(progress, seekBar.getMax());
             }
             showPreview();
         }
@@ -218,12 +210,10 @@ public class PreviewSeekBarLayout extends RelativeLayout implements SeekBar.OnSe
 
     @Override
     public void onStartTrackingTouch(SeekBar seekBar) {
-
     }
 
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
         hidePreview();
     }
-
 }
